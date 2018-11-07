@@ -14,6 +14,10 @@ rawData <- file.path(home, file = 'rawData') # Save path to data directory as ob
 rData <- file.path(home, file = 'rData')
 tidyData <- file.path(home, file = 'tidyData')
 
+
+# Read in and tidy Gabi and Amal's Data ----------------------------------------------
+
+
 gabiRSR1 <- read.csv(file.path(rawData, file = 'gabi-Leaf-area-and-weight.csv')) # Import data collected by Gabija
 gabiRSR1 <- as.tibble(gabiRSR1)
 head(gabiRSR1)
@@ -47,7 +51,7 @@ head(amalRSR1)
 amalRSR1 %>%
   mutate(plabel = as.factor(substr(amalRSR1$plabel, 1, 8))) %>% # Remove roman numerals from the plant label.
   select(Area, Weight..g., Hg, plabel) %>%
-  rename( "Weight" = "Weight..g.", "State" = "Hg") -> amalRSR1 #R Rename the columns to match Gabi's
+  rename( "Weight" = "Weight..g.", "State" = "Hg") -> amalRSR1 # Rename the columns to match Gabi's
 
 amalRSR1 %>%
   mutate(SLA = Area/Weight) -> amalRSR1 # Add an SLA column
@@ -78,14 +82,100 @@ rsr1LeafandGrowthData <- as.tibble(rsr1)
 saveRDS(rsr1LeafandGrowthData, file = file.path(rData, file = 'rsr1LeafandGrowthData'))
 write.csv(rsr1LeafandGrowthData, file = file.path(tidyData, file = 'rsr1LeafandGrowthData.csv'))
 
+rm(amalGR, amalRSR1, gabiRSR1, mergedamalRSR1, rsr1)
+
+
+# Data Exploration --------------------------------------------------------
+
+rsr1LeafandGrowthData %>% 
+  group_by(State, Rate) %>% 
+  summarise( n          = n(),
+             meanArea = mean(Area),
+             sdArea   = sd(Area),
+             meanWeight = mean(Weight),
+             sdWeight   = sd(Weight)    )
+  print()
+
 # Visualisaton ------------------------------------------------------------
+head(rsr1LeafandGrowthData)
+
+leafAreaPlot1 <- ggplot(rsr1LeafandGrowthData, aes(x = reorder(plabel, Area), y=Area, fill = State)) +
+  geom_bar(stat="identity") +
+  labs(title=NULL, x="B distachyon RSR1i Lines",
+       y = "Flag Leaf Area (cm2)") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90,hjust=1, face = "bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"))
+leafAreaPlot1
+
+leafAreaPlot2 <- ggplot(rsr1LeafandGrowthData, aes(x=State, y=Area, fill = Rate)) +
+  geom_boxplot() +
+  labs(title=NULL, x="Hygromycin Status of B. distachyon RSR1i Lines",
+       y = "Flag Leaf Area cm2") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x = element_text(hjust=1, face = "bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"))
+leafAreaPlot2
 
 
+leafWeightPlot1 <- ggplot(rsr1LeafandGrowthData, aes(x = reorder(plabel, Weight), y=Weight, fill = State)) +
+  geom_bar(stat="identity") +
+  labs(title=NULL, x="B distachyon RSR1i Lines",
+       y = "Flaf Leaf Weight (mg)") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90,hjust=1, face = "bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"))
+leafWeightPlot1
+
+leafWeightPlot2 <- ggplot(rsr1LeafandGrowthData, aes(x=State, y=Weight, fill = Rate)) +
+  geom_boxplot() +
+  labs(title=NULL, x="Hygromycin Status of B. distachyon RSR1i Lines",
+       y = "Flag Leaf Weight (mg)") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x = element_text(hjust=1, face = "bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"))
+leafWeightPlot2
+
+leafSLAPlot1 <- ggplot(rsr1LeafandGrowthData, aes(x = reorder(plabel, SLA), y=SLA, fill = State)) +
+  geom_bar(stat="identity") +
+  labs(title=NULL, x="B distachyon RSR1i Lines",
+       y = "Flag Leaf SLA") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90,hjust=1, face = "bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"))
+leafSLAPlot1
+
+leafSLAPlot2 <- ggplot(rsr1LeafandGrowthData, aes(x=State, y=SLA, fill = Rate)) +
+  geom_boxplot() +
+  labs(title=NULL, x="Hygromycin Status of B. distachyon RSR1i Lines",
+       y = "SLA") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x = element_text(hjust=1, face = "bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"))
+leafSLAPlot2
 
 # Stat test ---------------------------------------------------------------
 
 ## Chi square test on the categorical variables Growth rate and Hygromycin status
-(rsr1HgGrtable <- table(rsr1$State, rsr1$Rate))
+(rsr1HgGrtable <- table(rsr1LeafandGrowthData$State, rsr1LeafandGrowthData$Rate))
 (chisqrsr1HgGr <- chisq.test(rsr1HgGrtable))
 
 ## Kruskal Wallis and Dunn test for Leaf Area
@@ -117,17 +207,32 @@ rsr1GrainWeight %<>%
   rename("Weight" = "Weight_.g.", "State" = "Hgm_Stat") %>% 
   as.tibble()
 Desc(rsr1GrainWeight$Weight ~ rsr1GrainWeight$State)
-barplot(Weight ~ Sample, data = rsr1GrainWeight) # A boxplot shows hg+ positive grains are heavier.
+
 t.test(Weight ~ State, data = rsr1GrainWeight) # There is statistical significant difference in 20 grain weight between the hg+ and hg- plants
 
 grainWeightPlot1 <- ggplot(rsr1GrainWeight, aes(x = reorder(Sample, Weight), y=Weight, fill = State)) +
   geom_bar(stat="identity") +
-  labs(title=NULL, x="B distachyon RSR1i Lines", y = "
-       Weight of 20 grains (mg)")
+  labs(title="Grains of B. distachyon RSR1 Knockdown Lines Weigh More ", x="B distachyon RSR1i Lines", y = "
+       Weight of 20 grains (mg)") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90,hjust=1, face = "bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"))
+
 
 grainWeightPlot2 <- ggplot(rsr1GrainWeight, aes(x=State, y=Weight, fill=State)) +
   geom_boxplot() +
-  labs(title=NULL, x="Hygromycin Status", y = "Weight of 20 grains (mg)")
+  labs(title=NULL, x="Hygromycin Status of B. distachyon RSR1i Lines", y = "Weights of 20 grains (mg)") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x = element_text(hjust=1, face = "bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        legend.position = "none" )
+  
 
 grainWeightPlot1
 grainWeightPlot2
@@ -173,62 +278,44 @@ filter(rsr1GrainAreaDTresult, P.adj < 0.05) # Asks for values in the result tabl
 
 rsr1GrainDimension %>% 
   ggplot(aes(x = reorder(Sample, gLength), y=gLength, fill = State)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(title="RSR1 has no effect on B. distachyon grain length", x="B. distachyon RSR1 lines", y = "Grain length (cm)") +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=0.5, face = "bold"),
+        axis.text.y = element_text(face = "bold"))
+
 
 rsr1GrainDimension %>% 
   ggplot(aes(x = reorder(Sample, gWidth), y=gWidth, fill = State)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(title="Grains of B. distachyon RSR1 Knockdown lines are wider ", x="B. distachyon RSR1 lines", y = "Grain width (cm)") +
+  theme(axis.text.x=element_text(angle=90,hjust=0.5),
+        axis.text.y = element_text(face = "bold"))
+
 
 rsr1GrainDimension %>% 
   ggplot(aes(x = reorder(Sample, Area), y=Area, fill = State)) +
-  geom_boxplot()
-
-# Below, the mean and standard deviations are calculated and used to make other barplots. The features are similar.
-
-rsr1GrainMeanArea1 <- tapply(rsr1GrainDimension$Area, rsr1GrainDimension$Sample, mean)
-sampNames <- as.tibble(names(rsr1GrainMeanArea1))
-
-rsr1GrainMeanArea <- unname(tapply(rsr1GrainDimension$Area, rsr1GrainDimension$Sample, mean))
-rsr1GrainAreaSD <- unname(tapply(rsr1GrainDimension$Area, rsr1GrainDimension$Sample, sd))
-rsr1GrainAreaMSD <- as.tibble(cbind(rsr1GrainMeanArea, rsr1GrainAreaSD, sampNames))
-
-rsr1GrainMeanLength <- unname(tapply(rsr1GrainDimension$gLength, rsr1GrainDimension$Sample, mean))
-rsr1GrainLengthSD <- unname(tapply(rsr1GrainDimension$gLength, rsr1GrainDimension$Sample, sd))
-rsr1GrainMeanLengthMSD <- as.tibble(cbind(rsr1GrainMeanLength, rsr1GrainLengthSD, sampNames))
-
-rsr1GrainMeanWidth <- unname(tapply(rsr1GrainDimension$gWidth, rsr1GrainDimension$Sample, mean))
-rsr1GrainWidthSD <- unname(tapply(rsr1GrainDimension$gWidth, rsr1GrainDimension$Sample, sd))
-rsr1GrainMeanWidthMSD <- as.tibble(cbind(rsr1GrainMeanWidth, rsr1GrainWidthSD, sampNames))
-
-rm(rsr1GrainMeanArea1, sampNames, rsr1GrainMeanArea, rsr1GrainAreaSD, rsr1GrainMeanLength, 
-   rsr1GrainLengthSD, rsr1GrainMeanWidth, rsr1GrainWidthSD)  # Clear objects no longer needed.
+  geom_boxplot() +
+  labs(title="RSR1 has little effect on B. distachyon grain area", x="B. distachyon RSR1 lines", y = "Grain area (cm)") +
+  theme_gray() +
+  theme(axis.text.x=element_text(angle=90,hjust=1))
 
 
-# Barplots for Grain Dimensions -------------------------------------------
-# These plots are basic. I probably wont use them.
-rsr1GrainLengthMSD %<>% 
-  mutate(Sample = value) %>% 
-  select(-value)
+# Below, the mean and standard error of mean are calculated and used to make other barplots. The features are similar.
 
-rsr1GrainAreaMSD %>% 
-  ggplot(aes(x = reorder(Sample, rsr1GrainMeanLength), y=rsr1GrainMeanLength)) +
-  geom_bar(stat="identity")
+se <- function(g){
+  n <- length(g)
+  se1 <- sd(g)/sqrt(n)
+  return(se1)
+}
 
-rsr1GrainWidthMSD %<>% 
-  mutate(Sample = value) %>% 
-  select(-value)
+rsr1GrainDimension %>% 
+  summarise_at(vars(Area, gLength, gWidth),
+               funs(mean, se)) -> rsr1GrainDimensionMSD
 
-rsr1GrainAreaMSD %>% 
-  ggplot(aes(x = reorder(Sample, rsr1GrainMeanWidth), y=rsr1GrainMeanWidth)) +
-  geom_bar(stat="identity")
-
-rsr1GrainAreaMSD %<>% 
-  mutate(Sample = value) %>% 
-  select(-value)
-
-rsr1GrainAreaMSD %>% 
-  ggplot(aes(x = reorder(Sample, rsr1GrainMeanArea), y=rsr1GrainMeanArea)) +
-  geom_bar(stat="identity")
-
-
-  
+rsr1GrainDimensionMSD %>% 
+  ggplot(aes(x = reorder(Sample, Area_mean), y=Area_mean, ymin = Area_mean - 1.96*Area_se,
+             ymax = Area_mean + 1.96*Area_se)) +
+  geom_bar(stat="identity") +
+  geom_errorbar( width = 0.2, size = 1.2)
